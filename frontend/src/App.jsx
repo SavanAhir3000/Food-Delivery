@@ -23,7 +23,7 @@ import AiChatbot from "./components/AiChatbot/AiChatbot";
 import ProtectedRiderRoute from "./components/ProtectedRiderRoute/ProtectedRiderRoute";
 
 const App = () => {
-  const [showLogin, setShowLogin] = useState(false);
+  const [showLoginState, setShowLoginState] = useState(null);
 
   // Network Offline Handler
   useEffect(() => {
@@ -60,7 +60,14 @@ const App = () => {
 
   return (
     <>
-      {showLogin ? <LoginPopup setShowLogin={setShowLogin} /> : <></>}
+      {showLoginState ? (
+        <LoginPopup
+          setShowLogin={setShowLoginState}
+          initialState={showLoginState}
+        />
+      ) : (
+        <></>
+      )}
       <div className="app">
         <ToastContainer
           position="top-center"
@@ -75,7 +82,7 @@ const App = () => {
           limit={3}
           theme="colored"
         />
-        <Navbar setShowLogin={setShowLogin} />
+        <Navbar setShowLogin={setShowLoginState} />
         <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Home />} />

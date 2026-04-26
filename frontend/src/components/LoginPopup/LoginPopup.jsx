@@ -5,18 +5,24 @@ import { StoreContext } from "../../context/StoreContext";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
-const LoginPopup = ({ setShowLogin }) => {
+const LoginPopup = ({ setShowLogin, initialState = "Login" }) => {
   const { url, setToken, setUserName, setUserEmail } = useContext(StoreContext);
   const navigate = useNavigate();
-  const [currentState, setCurrentState] = useState("Login");
+  const [currentState, setCurrentState] = useState(initialState);
   const [show2FA, setShow2FA] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [data, setData] = useState({
     name: "",
     email: "",
     password: "",
+    role: "user",
   });
+
+  useEffect(() => {
+    setCurrentState(initialState || "Login");
+  }, [initialState]);
 
   const onChangeHandler = (event) => {
     const name = event.target.name;
@@ -92,7 +98,11 @@ const LoginPopup = ({ setShowLogin }) => {
     }
 
     try {
-      const response = await axios.post(newUrl, data);
+      const payload =
+        currentState === "Sign Up"
+          ? data
+          : { email: data.email, password: data.password };
+      const response = await axios.post(newUrl, payload);
 
       if (response.data.success) {
         // Check if 2FA is required (login flow)
@@ -177,14 +187,25 @@ const LoginPopup = ({ setShowLogin }) => {
             {currentState === "Login" || currentState === "Forgot Password" ? (
               <></>
             ) : (
-              <input
-                name="name"
-                onChange={onChangeHandler}
-                value={data.name}
-                type="text"
-                placeholder="Your name"
-                required
-              />
+              <>
+                <input
+                  name="name"
+                  onChange={onChangeHandler}
+                  value={data.name}
+                  type="text"
+                  placeholder="Your name"
+                  required
+                />
+                <select
+                  name="role"
+                  onChange={onChangeHandler}
+                  value={data.role}
+                  required
+                >
+                  <option value="user">Customer</option>
+                  <option value="rider">Rider</option>
+                </select>
+              </>
             )}
             <input
               name="email"

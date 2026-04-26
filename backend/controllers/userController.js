@@ -22,6 +22,7 @@ const ERROR_MESSAGES = {
   NAME_REQUIRED:             "Name is required",
   INVALID_EMAIL:             "Please enter a valid email address",
   PASSWORD_TOO_SHORT:        "Password must be at least 8 characters",
+  INVALID_ROLE:              "Please select a valid role",
   REGISTRATION_FAILED:       "Registration failed. Please try again.",
   NO_REFRESH_TOKEN:          "Refresh token is required",
   INVALID_REFRESH_TOKEN:     "Invalid or expired refresh token. Please login again.",

@@ -134,11 +134,14 @@ export const completeTwoFA = async (email, code) => {
 /**
  * Register a new user. Issues tokens directly (no 2FA on first signup).
  */
-export const registerNewUser = async ({ name, email, password }) => {
+export const registerNewUser = async ({ name, email, password, role }) => {
   // Validate BEFORE hitting the DB to surface clean error messages
   if (!name || !name.trim())              throw new Error("NAME_REQUIRED");
   if (!validator.isEmail(email))           throw new Error("INVALID_EMAIL");
   if (!password || password.length < 8)   throw new Error("PASSWORD_TOO_SHORT");
+  const normalizedRole = String(role || "user").trim().toLowerCase();
+  const dbRole = normalizedRole === "customer" ? "user" : normalizedRole;
+  if (!["user", "rider"].includes(dbRole)) throw new Error("INVALID_ROLE");
 
   const exists = await findUserByEmail(email);
   if (exists) throw new Error("USER_EXISTS");
@@ -149,7 +152,7 @@ export const registerNewUser = async ({ name, email, password }) => {
   // insert() returns an ARRAY even for single-row inserts — take [0]
   const { data: rows, error } = await insforge.database
     .from("users")
-    .insert({ name: name.trim(), email, password: hashedPassword })
+    .insert({ name: name.trim(), email, password: hashedPassword, role: dbRole })
     .select()
     .single();
   if (error) throw new Error(error.message);

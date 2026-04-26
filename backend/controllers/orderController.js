@@ -146,7 +146,14 @@ const reorderOrder = async (req, res) => {
 
 const submitFeedback = async (req, res) => {
   try {
-    const result = await submitOrderFeedback(req.userId, req.body.orderId, req.body.rating, req.body.comment);
+    const io = req.app.get("io");
+    const result = await submitOrderFeedback(
+      req.userId,
+      req.body.orderId,
+      req.body.rating,
+      req.body.comment,
+      io
+    );
     res.json({ success: true, message: "Feedback submitted", data: result });
   } catch (error) {
     handleServiceError(res, error, "Feedback submission failed");

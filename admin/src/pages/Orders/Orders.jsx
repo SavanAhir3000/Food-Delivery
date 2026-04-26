@@ -289,6 +289,37 @@ const Orders = ({ url }) => {
       );
     });
 
+    // Real-time sync: user cancellation/refund style updates sent as order_update
+    socket.on("order_update", ({ orderId, status }) => {
+      const normalized = normalizeStatus(status);
+      setOrders((prev) => {
+        const hasOrder = prev.some((o) => String(o._id) === String(orderId));
+        if (!hasOrder) {
+          fetchAllOrder();
+          return prev;
+        }
+        return prev.map((o) =>
+          String(o._id) === String(orderId) ? { ...o, status: normalized } : o
+        );
+      });
+    });
+
+    // Real-time sync: feedback submitted by customer
+    socket.on("order_feedback_update", ({ orderId, feedback_rating, feedback_comment, feedback_given_at }) => {
+      setOrders((prev) => {
+        const hasOrder = prev.some((o) => String(o._id) === String(orderId));
+        if (!hasOrder) {
+          fetchAllOrder();
+          return prev;
+        }
+        return prev.map((o) =>
+          String(o._id) === String(orderId)
+            ? { ...o, feedback_rating, feedback_comment, feedback_given_at }
+            : o
+        );
+      });
+    });
+
     return () => socket.disconnect();
   }, [token, url]);
 

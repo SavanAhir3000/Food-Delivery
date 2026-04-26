@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import { StoreContext } from '../../context/StoreContext';
+import { assets } from '../../assets/frontend_assets/assets';
 import './ResetPassword.css';
 
 const ResetPassword = () => {
@@ -41,6 +42,11 @@ const ResetPassword = () => {
             <form onSubmit={submitHandler} className='reset-password-container'>
                 <div className='reset-password-title'>
                     <h2>Set New Password</h2>
+                    <img
+                        src={assets.cross_icon}
+                        alt='Close'
+                        onClick={() => navigate('/')}
+                    />
                 </div>
                 <div className='reset-password-inputs'>
                     <input

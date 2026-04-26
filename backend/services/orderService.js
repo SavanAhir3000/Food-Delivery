@@ -581,6 +581,14 @@ export const cancelUserOrder = async (userId, orderId, io) => {
     status: "Cancelled",
     updatedAt: new Date(),
   });
+  emitSocketEvent(io, "admin_room", "order_status_update", {
+    orderId: cancelledOrder.id,
+    status: "Cancelled",
+  });
+  emitSocketEvent(io, `user_${userId}`, "order_status_update", {
+    orderId: cancelledOrder.id,
+    status: "Cancelled",
+  });
 
   if (customer?.email) {
     sendStatusUpdateEmail(customer.email, remapOrder(cancelledOrder), "Cancelled").catch(err => logger.error('sendStatusUpdateEmail (cancel) failed:', err));
@@ -596,7 +604,7 @@ export const cancelUserOrder = async (userId, orderId, io) => {
  * on the `orders` table. If your InsForge `orders` table doesn't have this column,
  * you'll get a clear error message from the API.
  */
-export const submitOrderFeedback = async (userId, orderId, rating, comment) => {
+export const submitOrderFeedback = async (userId, orderId, rating, comment, io) => {
   const { data: order, error: fetchError } = await insforge.database
     .from("orders")
     .select("id, user_id, status, feedback_rating")
@@ -626,6 +634,19 @@ export const submitOrderFeedback = async (userId, orderId, rating, comment) => {
   if (updateError) {
     throw new Error(updateError.message);
   }
+
+  const feedbackPayload = {
+    orderId: updated.id,
+    status: updated.status,
+    feedback_rating: updated.feedback_rating,
+    feedback_comment: updated.feedback_comment,
+    feedback_given_at: updated.feedback_given_at,
+    updatedAt: new Date(),
+  };
+
+  // Push feedback instantly to admin + customer dashboards.
+  emitSocketEvent(io, "admin_room", "order_feedback_update", feedbackPayload);
+  emitSocketEvent(io, `user_${userId}`, "order_feedback_update", feedbackPayload);
 
   return remapOrder(updated);
 };

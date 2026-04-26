@@ -28,7 +28,17 @@ const STATUS_META = {
   "Cancelled":        { color: "text-red-400",     bg: "bg-red-500/15",    border: "border-red-500/30", dot: "bg-red-400" },
   "Refunded":         { color: "text-purple-400",  bg: "bg-purple-500/15", border: "border-purple-500/30", dot: "bg-purple-400" },
 };
-const normalizeStatus = (status) => (status === "Out for delivery" ? "Out for Delivery" : status);
+const normalizeStatus = (status) => {
+  const value = String(status || "").trim();
+  const lower = value.toLowerCase();
+  if (lower === "out for delivery" || lower === "out for delivery ") return "Out for Delivery";
+  if (lower === "ready for pickup") return "Ready for Pickup";
+  if (lower === "food processing") return "Food Processing";
+  if (lower === "delivered") return "Delivered";
+  if (lower === "cancelled") return "Cancelled";
+  if (lower === "refunded") return "Refunded";
+  return value;
+};
 
 // ── Countdown Timer ────────────────────────────────────────────────────────────
 const CountdownTimer = ({ estimatedDelivery }) => {
@@ -208,6 +218,7 @@ const AiSummary = ({ orderId, url, token, dark }) => {
 // ── Order Card ─────────────────────────────────────────────────────────────────
 const OrderCard = ({ order, url, token, onCancel, onReorder, onGiveFeedback, dark }) => {
   const meta = STATUS_META[order.status] || STATUS_META["Food Processing"];
+  const hasFeedback = Number(order?.feedback_rating || 0) > 0;
   const isActive =
     order.status === "Food Processing" ||
     order.status === "Ready for Pickup" ||
@@ -322,7 +333,7 @@ const OrderCard = ({ order, url, token, onCancel, onReorder, onGiveFeedback, dar
           </button>
         )}
 
-        {order.status === "Delivered" && !order?.feedback_rating && (
+        {order.status === "Delivered" && !hasFeedback && (
           <button
             onClick={() => onGiveFeedback(order)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition-all duration-200 active:scale-95 ${
@@ -335,7 +346,7 @@ const OrderCard = ({ order, url, token, onCancel, onReorder, onGiveFeedback, dar
           </button>
         )}
 
-        {order.status === "Delivered" && order?.feedback_rating && (
+        {order.status === "Delivered" && hasFeedback && (
           <button
             disabled
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border opacity-60 cursor-not-allowed ${
@@ -384,6 +395,45 @@ const MyOrders = () => {
   const [isSubmittingFeedback, setIsSubmittingFeedback] = useState(false);
   const tabsContainerRef = useRef(null);
 
+  const openFeedbackIfPending = useCallback(
+    async (orderId, maybeOrder = null) => {
+      const local = maybeOrder || data.find((o) => String(o._id) === String(orderId));
+      const hasLocalFeedback = Number(local?.feedback_rating || 0) > 0;
+      if (local && local.status === "Delivered" && !hasLocalFeedback) {
+        setFeedbackOrder(local);
+        setFeedbackRating(5);
+        setFeedbackComment("");
+        setActiveFilter("Delivered");
+        return;
+      }
+
+      // Fallback: fetch latest order details when order is outside loaded page slice.
+      try {
+        const res = await axios.get(`${url}/api/order/${orderId}`, { headers: { token } });
+        const fetched = res?.data?.data;
+        const status = normalizeStatus(fetched?.status);
+        const hasFeedback = Number(fetched?.feedback_rating || 0) > 0;
+        if (res?.data?.success && status === "Delivered" && !hasFeedback) {
+          const normalized = { ...fetched, status };
+          setData((prev) => {
+            const exists = prev.some((o) => String(o._id) === String(orderId));
+            if (exists) {
+              return prev.map((o) => (String(o._id) === String(orderId) ? normalized : o));
+            }
+            return [normalized, ...prev];
+          });
+          setFeedbackOrder(normalized);
+          setFeedbackRating(5);
+          setFeedbackComment("");
+          setActiveFilter("Delivered");
+        }
+      } catch {
+        // no-op: realtime status will still be visible
+      }
+    },
+    [data, token, url]
+  );
+
   const fetchOrders = useCallback(async (pageNum = 1) => {
     if (!token) return;
     setIsLoading(true);
@@ -416,13 +466,22 @@ const MyOrders = () => {
       const orderId = update?.orderId;
       if (!status || orderId == null) return;
 
+      let deliveredOrderWithoutFeedback = null;
       setData((prev) => {
         const has = prev.some((o) => String(o._id) === String(orderId));
         if (!has) {
           fetchOrders(1);
           return prev;
         }
-        return prev.map((o) => (String(o._id) === String(orderId) ? { ...o, status } : o));
+        return prev.map((o) => {
+          if (String(o._id) !== String(orderId)) return o;
+          const updatedOrder = { ...o, status };
+          const hasFeedback = Number(updatedOrder?.feedback_rating || 0) > 0;
+          if (status === "Delivered" && !hasFeedback) {
+            deliveredOrderWithoutFeedback = updatedOrder;
+          }
+          return updatedOrder;
+        });
       });
 
       if (status === "Out for Delivery") {
@@ -433,9 +492,32 @@ const MyOrders = () => {
             ?.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
         }, 50);
       }
+
+      if (status === "Delivered") {
+        toast.success("Order delivered successfully!");
+        openFeedbackIfPending(orderId, deliveredOrderWithoutFeedback);
+      }
     },
-    [fetchOrders]
+    [fetchOrders, openFeedbackIfPending]
   );
+
+  const handleRealtimeFeedbackUpdate = useCallback((update) => {
+    const orderId = update?.orderId;
+    if (orderId == null) return;
+
+    setData((prev) =>
+      prev.map((o) =>
+        String(o._id) === String(orderId)
+          ? {
+              ...o,
+              feedback_rating: update.feedback_rating,
+              feedback_comment: update.feedback_comment,
+              feedback_given_at: update.feedback_given_at,
+            }
+          : o
+      )
+    );
+  }, []);
 
   // Shared socket from StoreContext path — same room as notifications
   useEffect(() => {
@@ -445,6 +527,7 @@ const MyOrders = () => {
 
     socket.on("order_update", handleRealtimeStatusUpdate);
     socket.on("order_status_update", handleRealtimeStatusUpdate);
+    socket.on("order_feedback_update", handleRealtimeFeedbackUpdate);
 
     const onErr = (err) => {
       console.error("Socket connect_error:", err?.message || err);
@@ -454,9 +537,10 @@ const MyOrders = () => {
     return () => {
       socket.off("order_update", handleRealtimeStatusUpdate);
       socket.off("order_status_update", handleRealtimeStatusUpdate);
+      socket.off("order_feedback_update", handleRealtimeFeedbackUpdate);
       socket.off("connect_error", onErr);
     };
-  }, [token, handleRealtimeStatusUpdate]);
+  }, [token, handleRealtimeStatusUpdate, handleRealtimeFeedbackUpdate]);
 
   const confirmCancel = async () => {
     if (!cancelModalOrderId || isCancelling) return;

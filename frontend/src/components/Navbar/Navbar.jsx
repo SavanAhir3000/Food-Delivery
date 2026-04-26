@@ -314,13 +314,13 @@ const Navbar = ({ setShowLogin }) => {
           {!token ? (
             <div className="flex items-center gap-2 sm:gap-3 transition-opacity duration-300">
               <button
-                onClick={() => setShowLogin(true)}
+                onClick={() => setShowLogin("Login")}
                 className={`hidden sm:flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold bg-transparent border border-white/20 transition-colors duration-200 hover:border-brand-accent ${dark ? "text-white" : "text-slate-800 border-slate-300 hover:text-brand-accent"}`}
               >
                 Login
               </button>
               <button
-                onClick={() => setShowLogin(true)}
+                onClick={() => setShowLogin("Sign Up")}
                 className="flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white bg-brand-accent transition-all duration-200 hover:-translate-y-0.5 active:scale-95 shadow-[0_4px_14px_rgba(233,69,96,0.4)]"
               >
                 Sign Up
