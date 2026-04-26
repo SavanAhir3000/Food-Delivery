@@ -138,6 +138,9 @@ const reorderOrder = async (req, res) => {
   try {
     const io = req.app.get("io");
     const result = await reorderPreviousOrder(req.body.userId, req.body.orderId, io);
+    if (result.isCOD) {
+      return res.json({ success: true, isCOD: true, message: "Order Placed Successfully via COD" });
+    }
     res.json({ success: true, session_url: result.session_url });
   } catch (error) {
     handleServiceError(res, error, "Reorder failed");

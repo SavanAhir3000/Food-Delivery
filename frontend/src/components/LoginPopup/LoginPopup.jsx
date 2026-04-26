@@ -13,6 +13,7 @@ const LoginPopup = ({ setShowLogin, initialState = "Login" }) => {
   const [currentState, setCurrentState] = useState(initialState);
   const [show2FA, setShow2FA] = useState(false);
   const [otpCode, setOtpCode] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [data, setData] = useState({
     name: "",
     email: "",
@@ -32,6 +33,8 @@ const LoginPopup = ({ setShowLogin, initialState = "Login" }) => {
 
   const onLogin = async (event) => {
     event.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
 
     // Step 2: Verify 2FA code
     if (show2FA) {
@@ -69,6 +72,8 @@ const LoginPopup = ({ setShowLogin, initialState = "Login" }) => {
         }
       } catch (error) {
         toast.error("Verification failed. Please try again.");
+      } finally {
+        setIsSubmitting(false);
       }
       return;
     }
@@ -85,6 +90,8 @@ const LoginPopup = ({ setShowLogin, initialState = "Login" }) => {
         }
       } catch (error) {
         toast.error("Something went wrong. Please try again.");
+      } finally {
+        setIsSubmitting(false);
       }
       return;
     }
@@ -144,6 +151,8 @@ const LoginPopup = ({ setShowLogin, initialState = "Login" }) => {
       }
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -228,14 +237,14 @@ const LoginPopup = ({ setShowLogin, initialState = "Login" }) => {
           </div>
         )}
 
-        <button type="submit">
+        <button type="submit" disabled={isSubmitting}>
           {show2FA
-            ? "Verify & Login"
+            ? (isSubmitting ? "Verifying..." : "Verify & Login")
             : currentState === "Forgot Password"
-              ? "Send Reset Link"
+              ? (isSubmitting ? "Sending..." : "Send Reset Link")
               : currentState === "Sign Up"
-                ? "Create Account"
-                : "Login"}
+                ? (isSubmitting ? "Creating..." : "Create Account")
+                : (isSubmitting ? "Logging in..." : "Login")}
         </button>
 
         {!show2FA && (
@@ -251,22 +260,22 @@ const LoginPopup = ({ setShowLogin, initialState = "Login" }) => {
               <>
                 <p>
                   Create a new account?{" "}
-                  <span onClick={() => setCurrentState("Sign Up")}>Click here</span>
+                  <span onClick={() => !isSubmitting && setCurrentState("Sign Up")}>Click here</span>
                 </p>
                 <p>
                   Forgot your password?{" "}
-                  <span onClick={() => setCurrentState("Forgot Password")}>Reset it here</span>
+                  <span onClick={() => !isSubmitting && setCurrentState("Forgot Password")}>Reset it here</span>
                 </p>
               </>
             ) : currentState === "Sign Up" ? (
               <p>
                 Already have an account?{" "}
-                <span onClick={() => setCurrentState("Login")}>Login here</span>
+                <span onClick={() => !isSubmitting && setCurrentState("Login")}>Login here</span>
               </p>
             ) : (
               <p>
                 Remembered your password?{" "}
-                <span onClick={() => setCurrentState("Login")}>Login here</span>
+                <span onClick={() => !isSubmitting && setCurrentState("Login")}>Login here</span>
               </p>
             )}
           </>

@@ -118,6 +118,13 @@ html.dark .cart-items-title {
     box-shadow: 0 4px 15px rgba(255, 107, 53, 0.25);
 }
 
+.cart-total > button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 .cart-total > button:not(.promo-btn):hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 25px rgba(255, 107, 53, 0.4);
@@ -251,4 +258,50 @@ html.dark .cart-items-item {
 
 html.dark .cart-items-item:hover {
     background: #0f172a;
+}
+
+.cart-empty {
+    margin: 18px 0 8px;
+    padding: 28px 20px;
+    border-radius: var(--radius-md);
+    text-align: center;
+    border: 1px dashed #d1d5db;
+    background: #f8fafc;
+}
+
+.cart-empty-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.cart-empty-subtitle {
+    margin-top: 6px;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.cart-empty-btn {
+    margin-top: 16px;
+    border: none;
+    padding: 11px 18px;
+    border-radius: var(--radius-sm);
+    color: white;
+    background: var(--gradient-primary);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+html.dark .cart-empty {
+    border-color: #334155;
+    background: #111827;
+}
+
+html.dark .cart-empty-title {
+    color: #f8fafc;
+}
+
+html.dark .cart-empty-subtitle {
+    color: #94a3b8;
 }

@@ -165,6 +165,16 @@ const FoodDisplay = ({ category }) => {
 
   const isLoading = food_list.length === 0;
 
+  // When user types in navbar search, jump to results section automatically.
+  useEffect(() => {
+    if (!searchTerm?.trim()) return;
+    const t = setTimeout(() => {
+      const el = document.getElementById("food-display");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 120);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
+
   return (
     <section className={`py-10 transition-colors duration-300 ${dark ? "bg-brand-dark" : "bg-slate-50"}`} id="food-display">
 
@@ -192,42 +202,23 @@ const FoodDisplay = ({ category }) => {
 
         {/* Controls row */}
         <div className="flex flex-wrap items-center gap-3">
-          {/* Feature 2: AI Search toggle */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => { setAiSearchEnabled(!aiSearchEnabled); clearAiSearch(); }}
-              className={[
-                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all duration-200",
-                aiSearchEnabled
-                  ? "bg-brand-accent text-white border-brand-accent shadow-sm"
-                  : dark
-                    ? "border-brand-border text-brand-muted hover:border-brand-accent hover:text-brand-accent"
-                    : "border-slate-200 text-slate-500 hover:border-brand-accent hover:text-brand-accent bg-white",
-              ].join(" ")}
-            >
-              ✨ AI Search
-            </button>
-          </div>
-
           {/* Price range filter (hidden when AI search active) */}
-          {!aiSearchEnabled && (
-            <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 ${dark ? "border-brand-border bg-brand-card" : "border-brand-lightBorder bg-white"}`}>
-              <span className={`text-xs font-semibold ${dark ? "text-brand-muted" : "text-slate-500"}`}>Price</span>
-              <input
-                type="number" min="0" placeholder="Min"
-                value={priceRange.min}
-                onChange={(e) => setPriceRange((p) => ({ ...p, min: e.target.value }))}
-                className={`w-20 rounded-md px-2 py-1 text-xs outline-none ${dark ? "bg-brand-dark text-slate-100" : "bg-slate-100 text-slate-700"}`}
-              />
-              <span className={dark ? "text-brand-muted" : "text-slate-400"}>-</span>
-              <input
-                type="number" min="0" placeholder="Max"
-                value={priceRange.max}
-                onChange={(e) => setPriceRange((p) => ({ ...p, max: e.target.value }))}
-                className={`w-20 rounded-md px-2 py-1 text-xs outline-none ${dark ? "bg-brand-dark text-slate-100" : "bg-slate-100 text-slate-700"}`}
-              />
-            </div>
-          )}
+          <div className={`flex items-center gap-2 rounded-xl border px-3 py-2 ${dark ? "border-brand-border bg-brand-card" : "border-brand-lightBorder bg-white"}`}>
+            <span className={`text-xs font-semibold ${dark ? "text-brand-muted" : "text-slate-500"}`}>Price</span>
+            <input
+              type="number" min="0" placeholder="Min"
+              value={priceRange.min}
+              onChange={(e) => setPriceRange((p) => ({ ...p, min: e.target.value }))}
+              className={`w-20 rounded-md px-2 py-1 text-xs outline-none ${dark ? "bg-brand-dark text-slate-100" : "bg-slate-100 text-slate-700"}`}
+            />
+            <span className={dark ? "text-brand-muted" : "text-slate-400"}>-</span>
+            <input
+              type="number" min="0" placeholder="Max"
+              value={priceRange.max}
+              onChange={(e) => setPriceRange((p) => ({ ...p, max: e.target.value }))}
+              className={`w-20 rounded-md px-2 py-1 text-xs outline-none ${dark ? "bg-brand-dark text-slate-100" : "bg-slate-100 text-slate-700"}`}
+            />
+          </div>
         </div>
       </div>
 

@@ -75,11 +75,33 @@ const PlaceOrder = () => {
   const [fetchingLocation, setFetchingLocation] = useState(false);
   const [checkoutPromo, setCheckoutPromo] = useState("");
   const [appliedCheckoutPromo, setAppliedCheckoutPromo] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const onChangeHandler = (event) => {
     const name = event.target.name;
     const value = event.target.value;
     setData((data) => ({ ...data, [name]: value }));
+    setFieldErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const validateAddressFields = () => {
+    if (selectedAddressId) return {};
+    const required = {
+      firstName: "First name is required",
+      lastName: "Last name is required",
+      email: "Email is required",
+      street: "Address is required",
+      city: "City is required",
+      state: "State is required",
+      zipcode: "Zip code is required",
+      country: "Country is required",
+      phone: "Phone is required",
+    };
+    const errors = {};
+    Object.entries(required).forEach(([key, msg]) => {
+      if (!String(data[key] || "").trim()) errors[key] = msg;
+    });
+    return errors;
   };
 
   const applyCheckoutPromo = () => {
@@ -156,7 +178,6 @@ const PlaceOrder = () => {
   const placeOrder = async (event) => {
     event.preventDefault();
     if (loading) return; // Prevent double clicks
-    setLoading(true);
 
     let orderItems = [];
     food_list.map((item) => {
@@ -166,6 +187,22 @@ const PlaceOrder = () => {
         orderItems.push(itemInfo);
       }
     });
+
+    if (orderItems.length === 0) {
+      toast.error("Your cart is empty. Add items first.", { toastId: "order-empty-cart" });
+      return;
+    }
+
+    if (!selectedAddressId) {
+      const errors = validateAddressFields();
+      if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        toast.error("Please fill all required delivery fields.", { toastId: "order-form-invalid" });
+        return;
+      }
+    }
+
+    setLoading(true);
 
     const effectiveSubtotal = Math.max(0, getTotalCartAmount() - calculateDiscount());
     const taxAmt = computeTax(data.state, effectiveSubtotal);
@@ -268,7 +305,7 @@ const PlaceOrder = () => {
         </div>
       </div>
 
-      <form className="place-order" onSubmit={placeOrder}>
+      <form className="place-order" onSubmit={placeOrder} noValidate>
         <div className="place-order-left">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
              <p className="title" style={{ margin: 0 }}>Delivery Information</p>
@@ -338,10 +375,15 @@ const PlaceOrder = () => {
           ) : (
             <div className="transition-all animate-[fadeIn_0.3s_ease-out]">
               <div className="multi-fields">
-                <input required name="firstName" value={data.firstName} onChange={onChangeHandler} type="text" placeholder="First name" />
-                <input required name="lastName" value={data.lastName} onChange={onChangeHandler} type="text" placeholder="Last name" />
+                <input name="firstName" value={data.firstName} onChange={onChangeHandler} type="text" placeholder="First name" />
+                <input name="lastName" value={data.lastName} onChange={onChangeHandler} type="text" placeholder="Last name" />
               </div>
-              <input required name="email" value={data.email} onChange={onChangeHandler} type="text" placeholder="Email Address" />
+              <div className="field-errors-row">
+                <span className="field-error-text">{fieldErrors.firstName || ""}</span>
+                <span className="field-error-text">{fieldErrors.lastName || ""}</span>
+              </div>
+              <input name="email" value={data.email} onChange={onChangeHandler} type="text" placeholder="Email Address" />
+              <p className="field-error-text">{fieldErrors.email || ""}</p>
 
               <Autocomplete
                 apiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY || ""}
@@ -374,18 +416,27 @@ const PlaceOrder = () => {
                 className="google-places-input"
                 onChange={onChangeHandler}
                 name="street"
-                required
               />
+              <p className="field-error-text">{fieldErrors.street || ""}</p>
 
               <div className="multi-fields">
-                <input required name="city" value={data.city} onChange={onChangeHandler} type="text" placeholder="City" />
-                <input required name="state" value={data.state} onChange={onChangeHandler} type="text" placeholder="State" />
+                <input name="city" value={data.city} onChange={onChangeHandler} type="text" placeholder="City" />
+                <input name="state" value={data.state} onChange={onChangeHandler} type="text" placeholder="State" />
+              </div>
+              <div className="field-errors-row">
+                <span className="field-error-text">{fieldErrors.city || ""}</span>
+                <span className="field-error-text">{fieldErrors.state || ""}</span>
               </div>
               <div className="multi-fields">
-                <input required name="zipcode" value={data.zipcode} onChange={onChangeHandler} type="text" placeholder="Zip Code" />
-                <input required name="country" value={data.country} onChange={onChangeHandler} type="text" placeholder="Country" />
+                <input name="zipcode" value={data.zipcode} onChange={onChangeHandler} type="text" placeholder="Zip Code" />
+                <input name="country" value={data.country} onChange={onChangeHandler} type="text" placeholder="Country" />
               </div>
-              <input required name="phone" value={data.phone} onChange={onChangeHandler} type="text" placeholder="Phone" />
+              <div className="field-errors-row">
+                <span className="field-error-text">{fieldErrors.zipcode || ""}</span>
+                <span className="field-error-text">{fieldErrors.country || ""}</span>
+              </div>
+              <input name="phone" value={data.phone} onChange={onChangeHandler} type="text" placeholder="Phone" />
+              <p className="field-error-text">{fieldErrors.phone || ""}</p>
 
               <div className="save-address-checkbox">
                 <label>

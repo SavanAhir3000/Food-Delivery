@@ -127,7 +127,7 @@
 
 
 
-import React, { useContext, useState } from "react";
+import React, { useContext, useMemo, useState, useEffect } from "react";
 import "./Cart.css";
 import { StoreContext } from "../../context/StoreContext";
 import { useNavigate } from "react-router-dom";
@@ -150,6 +150,16 @@ const Cart = () => {
 
   const [orderForSomeoneElse, setOrderForSomeoneElse] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  const cartEntries = useMemo(
+    () => (food_list || []).filter((item) => (cartItems?.[item._id] || 0) > 0),
+    [food_list, cartItems]
+  );
+  const isCartEmpty = cartEntries.length === 0;
 
 
 
@@ -183,29 +193,42 @@ const Cart = () => {
         <br />
         <hr />
 
-        {food_list && cartItems &&
-          food_list.map((item, index) => {
-            if (cartItems[item._id] > 0) {
-              return (
-                <div key={item._id}>
-                  <div className="cart-items-title cart-items-item">
-                    <img src={item.image} alt={item.name} />
-                    <p>{item.name}</p>
-                    <p>₹{item.price}</p>
-                    <p>{orderForSomeoneElse ? "-" : `${item.calorie} Cal`}</p>
-                    <p>{cartItems[item._id]}</p>
-                    <p>₹{item.price * cartItems[item._id]}</p>
-                    <p>{orderForSomeoneElse ? "-" : `${item.calorie * cartItems[item._id]} Cal`}</p>
-                    <p onClick={() => removeFromCart(item._id)} className="cross">
-                      <FaTimes color="#404040" />
-                    </p>
-                  </div>
-                  <hr />
-                </div>
-              );
-            }
-            return null;
-          })}
+        {cartEntries.map((item) => (
+          <div key={item._id}>
+            <div className="cart-items-title cart-items-item">
+              <img src={item.image} alt={item.name} />
+              <p>{item.name}</p>
+              <p>₹{item.price}</p>
+              <p>{orderForSomeoneElse ? "-" : `${item.calorie} Cal`}</p>
+              <p>{cartItems[item._id]}</p>
+              <p>₹{item.price * cartItems[item._id]}</p>
+              <p>{orderForSomeoneElse ? "-" : `${item.calorie * cartItems[item._id]} Cal`}</p>
+              <p onClick={() => removeFromCart(item._id)} className="cross">
+                <FaTimes color="#404040" />
+              </p>
+            </div>
+            <hr />
+          </div>
+        ))}
+
+        {isCartEmpty && (
+          <div className="cart-empty">
+            <p className="cart-empty-title">Your cart is empty</p>
+            <p className="cart-empty-subtitle">Add something tasty from the menu to continue.</p>
+            <button
+              onClick={() => {
+                navigate("/");
+                setTimeout(() => {
+                  const el = document.getElementById("explore-menu");
+                  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 120);
+              }}
+              className="cart-empty-btn"
+            >
+              Explore Menu
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="cart-bottom">
@@ -236,7 +259,10 @@ const Cart = () => {
             <b>Total Calories</b>
             <b>{getTotalCalories()} Cal</b>
           </div>
-          <button onClick={() => navigate('/order', { state: { orderForSomeoneElse } })}>
+          <button
+            onClick={() => navigate('/order', { state: { orderForSomeoneElse } })}
+            disabled={isCartEmpty}
+          >
             PROCEED TO CHECKOUT
           </button>
         </div>

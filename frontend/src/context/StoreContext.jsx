@@ -89,7 +89,7 @@ const StoreContextProvider = (props) => {
       if (data?.status) {
         toast.info(`Order: ${data.status}`, {
           theme: "dark",
-          toastId: `order_status_${data.orderId}_${data.status}`,
+          toastId: `order_${data.orderId}_${data.status}`,
         });
       }
       fetchNotifications();
@@ -99,7 +99,7 @@ const StoreContextProvider = (props) => {
       if (data?.status) {
         toast.info(`Order: ${data.status}`, {
           theme: "dark",
-          toastId: `order_update_${data.orderId}_${data.status}`,
+          toastId: `order_${data.orderId}_${data.status}`,
         });
       }
       fetchNotifications();

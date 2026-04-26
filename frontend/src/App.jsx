@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import Navbar from "./components/Navbar/Navbar";
-import { Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes, Navigate, useLocation } from "react-router-dom";
 import Home from "./pages/Home/Home";
 import Cart from "./pages/Cart/Cart";
 import PlaceOrder from "./pages/PlaceOrder/PlaceOrder";
@@ -24,6 +24,11 @@ import ProtectedRiderRoute from "./components/ProtectedRiderRoute/ProtectedRider
 
 const App = () => {
   const [showLoginState, setShowLoginState] = useState(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [location.pathname, location.search]);
 
   // Network Offline Handler
   useEffect(() => {
@@ -82,7 +87,7 @@ const App = () => {
           limit={3}
           theme="colored"
         />
-        <Navbar setShowLogin={setShowLoginState} />
+        <Navbar setShowLogin={setShowLoginState} showLoginState={showLoginState} />
         <ErrorBoundary>
           <Routes>
             <Route path="/" element={<Home />} />

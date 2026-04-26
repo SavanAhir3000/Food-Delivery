@@ -12,7 +12,7 @@ const Footer = () => {
   };
 
   const goOrderPage = () => {
-    navigate("/order");
+    navigate("/myorders");
     setTimeout(() => window.scrollTo({ top: 0, behavior: "smooth" }), 80);
   };
 

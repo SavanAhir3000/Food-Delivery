@@ -24,7 +24,7 @@ const decodeJwtPayload = (token) => {
   }
 };
 
-const Navbar = ({ setShowLogin }) => {
+const Navbar = ({ setShowLogin, showLoginState }) => {
   const [menu, setMenu] = useState("home");
   const [showSearch, setShowSearch] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
@@ -56,6 +56,7 @@ const Navbar = ({ setShowLogin }) => {
       if (!scrollToSection(targetId)) {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
+      window.history.replaceState(null, "", `/#${targetId}`);
       return;
     }
 
@@ -64,12 +65,15 @@ const Navbar = ({ setShowLogin }) => {
       if (!scrollToSection(targetId)) {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
+      window.history.replaceState(null, "", `/#${targetId}`);
     }, 120);
   };
 
   const handleHomeClick = (e) => {
     e.preventDefault();
     setMenu("home");
+    setSearchTerm("");
+    setShowSearch(false);
     navigateHomeAndScroll("hero");
   };
 
@@ -102,6 +106,11 @@ const Navbar = ({ setShowLogin }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    // Close stale profile dropdown when auth/session state changes.
+    setShowProfile(false);
+  }, [token]);
 
   const cartCount = Object.values(cartItems || {}).reduce(
     (sum, qty) => sum + (Number(qty) || 0),
@@ -173,9 +182,12 @@ const Navbar = ({ setShowLogin }) => {
                 <li key={key}>
                   <a
                     href={href}
-                    onClick={key === "menu" ? handleMenuClick : () => {
+                    onClick={key === "menu" ? handleMenuClick : (e) => {
+                      e.preventDefault();
                       setMenu(key);
-                      if (key === "contact-us") toast.info("📍 Contact info is at the bottom!", { toastId: "contact-info" });
+                      if (key === "contact-us") {
+                        navigateHomeAndScroll("footer");
+                      }
                     }}
                     className={cls}
                   >
@@ -287,14 +299,16 @@ const Navbar = ({ setShowLogin }) => {
           {!token ? (
             <div className="flex items-center gap-2 sm:gap-3 transition-opacity duration-300">
               <button
-                onClick={() => setShowLogin("Login")}
+                onClick={() => { setShowProfile(false); setShowLogin("Login"); }}
+                disabled={Boolean(showLoginState)}
                 className={`hidden sm:flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold bg-transparent border border-white/20 transition-colors duration-200 hover:border-brand-accent ${dark ? "text-white" : "text-slate-800 border-slate-300 hover:text-brand-accent"}`}
               >
                 Login
               </button>
               <button
-                onClick={() => setShowLogin("Sign Up")}
-                className="flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white bg-brand-accent transition-all duration-200 hover:-translate-y-0.5 active:scale-95 shadow-[0_4px_14px_rgba(233,69,96,0.4)]"
+                onClick={() => { setShowProfile(false); setShowLogin("Sign Up"); }}
+                disabled={Boolean(showLoginState)}
+                className="flex items-center justify-center px-4 py-2 rounded-xl text-sm font-semibold text-white bg-brand-accent transition-all duration-200 hover:-translate-y-0.5 active:scale-95 shadow-[0_4px_14px_rgba(233,69,96,0.4)] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:translate-y-0"
               >
                 Sign Up
               </button>

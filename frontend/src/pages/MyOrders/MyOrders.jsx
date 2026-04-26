@@ -216,7 +216,7 @@ const AiSummary = ({ orderId, url, token, dark }) => {
 };
 
 // ── Order Card ─────────────────────────────────────────────────────────────────
-const OrderCard = ({ order, url, token, onCancel, onReorder, onGiveFeedback, dark }) => {
+const OrderCard = ({ order, url, token, onCancel, onReorder, onGiveFeedback, dark, isReordering }) => {
   const meta = STATUS_META[order.status] || STATUS_META["Food Processing"];
   const hasFeedback = Number(order?.feedback_rating || 0) > 0;
   const isActive =
@@ -361,11 +361,12 @@ const OrderCard = ({ order, url, token, onCancel, onReorder, onGiveFeedback, dar
 
         <button
           onClick={() => onReorder(order._id, order.items)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-95"
+          disabled={isReordering}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
           style={{ background: "linear-gradient(135deg,#e94560,#f97316)", color: "white", boxShadow: "0 4px 15px rgba(233,69,96,0.3)" }}
         >
           <FiShoppingCart className="w-4 h-4" />
-          Order Again
+          {isReordering ? "Processing..." : "Order Again"}
         </button>
       </div>
     </div>
@@ -388,6 +389,7 @@ const MyOrders = () => {
   const [activeFilter, setActiveFilter] = useState("All");
   const [cancelModalOrderId, setCancelModalOrderId] = useState(null);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [reorderingOrderId, setReorderingOrderId] = useState(null);
 
   const [feedbackOrder, setFeedbackOrder] = useState(null);
   const [feedbackRating, setFeedbackRating] = useState(5);
@@ -494,7 +496,6 @@ const MyOrders = () => {
       }
 
       if (status === "Delivered") {
-        toast.success("Order delivered successfully!");
         openFeedbackIfPending(orderId, deliveredOrderWithoutFeedback);
       }
     },
@@ -551,7 +552,7 @@ const MyOrders = () => {
         { orderId: cancelModalOrderId },
         { headers: { token } }
       );
-      if (res.data.success) { toast.success(res.data.message); fetchOrders(1); }
+      if (res.data.success) { fetchOrders(1); }
       else toast.error(res.data.message);
     } catch {
       toast.error("Failed to cancel order");
@@ -566,12 +567,19 @@ const MyOrders = () => {
   };
 
   const handleReorder = async (orderId, items) => {
+    if (reorderingOrderId) return;
+    setReorderingOrderId(orderId);
     try {
       const res = await axios.post(
         `${url}/api/order/reorder`,
         { orderId },
         { headers: { token } }
       );
+      if (res.data.success && res.data.isCOD) {
+        toast.success(res.data.message || "Order placed successfully via COD");
+        fetchOrders(1);
+        return;
+      }
       if (res.data.success && res.data.session_url) {
         window.location.replace(res.data.session_url);
         return;
@@ -587,6 +595,8 @@ const MyOrders = () => {
       await replaceCart(newCart);
       toast.info("Items added again. Please proceed to payment.");
       navigate("/order");
+    } finally {
+      setReorderingOrderId(null);
     }
   };
 
@@ -738,6 +748,7 @@ const MyOrders = () => {
                 onReorder={handleReorder}
                 onGiveFeedback={openFeedback}
                 dark={dark}
+                isReordering={String(reorderingOrderId) === String(order._id)}
               />
             ))}
           </div>

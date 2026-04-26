@@ -47,6 +47,25 @@
     gap: 12px;
 }
 
+.field-errors-row {
+    display: flex;
+    gap: 12px;
+    margin-top: -8px;
+    margin-bottom: 8px;
+}
+
+.field-errors-row .field-error-text {
+    flex: 1;
+}
+
+.field-error-text {
+    min-height: 16px;
+    font-size: 12px;
+    color: #ef4444;
+    margin: -8px 0 8px;
+    padding-left: 2px;
+}
+
 .place-order-right {
     width: 100%;
     max-width: max(40%, 500px);
@@ -185,4 +204,8 @@ html.dark .current-location-btn {
 
 html.dark .cart-total-details hr {
     border-color: rgba(255, 255, 255, 0.1);
+}
+
+html.dark .field-error-text {
+    color: #fda4af;
 }

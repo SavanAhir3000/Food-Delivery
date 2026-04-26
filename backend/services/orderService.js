@@ -258,7 +258,7 @@ export const reorderPreviousOrder = async (userId, orderId, io) => {
     address: previousOrder.delivery_address || previousOrder.address,
     promoCode: null,
     orderedForSomeoneElse: previousOrder.ordered_for_someone_else || false,
-    paymentMethod: "Stripe",
+    paymentMethod: previousOrder.payment_method === "COD" ? "COD" : "Stripe",
   };
 
   return placeNewOrder(reorderPayload, io);
@@ -268,26 +268,40 @@ export const reorderPreviousOrder = async (userId, orderId, io) => {
  * Verify a Stripe payment, mark order as paid, emit socket events, send notifications.
  */
 export const verifyOrderPayment = async (orderId, success, io) => {
-  if (success !== "true") {
-    await insforge.database.from("orders").delete().eq("id", orderId);
-    return { paid: false };
-  }
-
   const { data: preOrder } = await insforge.database
     .from("orders")
     .select()
     .eq("id", orderId)
     .maybeSingle();
 
+  if (!preOrder) {
+    return { paid: false };
+  }
+
+  if (success !== "true") {
+    await insforge.database.from("orders").delete().eq("id", orderId);
+    return { paid: false };
+  }
+
   let paymentIntentId = "";
 
   if (preOrder?.stripe_session_id) {
     try {
       const session = await stripe.checkout.sessions.retrieve(preOrder.stripe_session_id);
+      if (session?.payment_status !== "paid") {
+        await insforge.database.from("orders").delete().eq("id", orderId);
+        return { paid: false };
+      }
       paymentIntentId = session.payment_intent;
     } catch (err) {
       logger.error('Error retrieving Stripe session:', err);
+      await insforge.database.from("orders").delete().eq("id", orderId);
+      return { paid: false };
     }
+  } else if (preOrder.payment_method !== "COD") {
+    // Stripe orders must have a valid session reference.
+    await insforge.database.from("orders").delete().eq("id", orderId);
+    return { paid: false };
   }
 
   const invoiceNumber = `INV-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
