@@ -15,11 +15,11 @@ import {
 // ── Status config ──────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
   "Food Processing": { color: "text-orange-400", bg: "bg-orange-500/15", border: "border-orange-500/30", dot: "bg-orange-400", icon: FiPackage },
-  "Out for Delivery": { color: "text-blue-400",   bg: "bg-blue-500/15",   border: "border-blue-500/30",   dot: "bg-blue-400",   icon: FiTruck },
+  "Out for Delivery": { color: "text-blue-400", bg: "bg-blue-500/15", border: "border-blue-500/30", dot: "bg-blue-400", icon: FiTruck },
   "Ready for Pickup": { color: "text-yellow-400", bg: "bg-yellow-500/15", border: "border-yellow-500/30", dot: "bg-yellow-400", icon: FiTruck },
-  "Delivered":        { color: "text-emerald-400", bg: "bg-emerald-500/15",border: "border-emerald-500/30",dot: "bg-emerald-400",icon: FiCheckCircle },
-  "Refunded":         { color: "text-purple-400",  bg: "bg-purple-500/15", border: "border-purple-500/30", dot: "bg-purple-400", icon: FiRefreshCw },
-  "Cancelled":        { color: "text-red-400",     bg: "bg-red-500/15",    border: "border-red-500/30",    dot: "bg-red-400",    icon: FiXCircle },
+  "Delivered": { color: "text-emerald-400", bg: "bg-emerald-500/15", border: "border-emerald-500/30", dot: "bg-emerald-400", icon: FiCheckCircle },
+  "Refunded": { color: "text-purple-400", bg: "bg-purple-500/15", border: "border-purple-500/30", dot: "bg-purple-400", icon: FiRefreshCw },
+  "Cancelled": { color: "text-red-400", bg: "bg-red-500/15", border: "border-red-500/30", dot: "bg-red-400", icon: FiXCircle },
 };
 
 const getMeta = (status) => STATUS_CONFIG[status] || STATUS_CONFIG["Food Processing"];
@@ -62,11 +62,10 @@ const OrderCard = ({ order, onStatusChange, onRefund, isHighlighted }) => {
 
         <div className="flex items-center gap-2 flex-wrap justify-end">
           {/* Payment badge */}
-          <span className={`text-[10px] px-2.5 py-1 rounded-full font-semibold border ${
-            order.payment
+          <span className={`text-[10px] px-2.5 py-1 rounded-full font-semibold border ${order.payment
               ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/25"
               : "text-yellow-400 bg-yellow-500/10 border-yellow-500/25"
-          }`}>
+            }`}>
             {order.payment ? "✓ Paid" : "⏳ Pending"}
           </span>
           {order.paymentMethod === "COD" && (
@@ -173,14 +172,14 @@ const OrderCard = ({ order, onStatusChange, onRefund, isHighlighted }) => {
             (order.status === "Food Processing" ||
               order.status === "Ready for Pickup" ||
               order.status === "Out for Delivery") && (
-            <button
-              onClick={() => onRefund(order._id)}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 transition-all duration-200 active:scale-95"
-            >
-              <FiDollarSign className="w-3.5 h-3.5" />
-              Issue Refund
-            </button>
-          )}
+              <button
+                onClick={() => onRefund(order._id)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold text-red-400 border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 transition-all duration-200 active:scale-95"
+              >
+                <FiDollarSign className="w-3.5 h-3.5" />
+                Issue Refund
+              </button>
+            )}
           {order.isRefunded && (
             <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-purple-500/10 border border-purple-500/25">
               <FiAlertCircle className="text-purple-400 w-4 h-4 shrink-0" />
@@ -335,10 +334,10 @@ const Orders = ({ url }) => {
   });
 
   const stats = {
-    total:      orders.length,
+    total: orders.length,
     processing: orders.filter(o => o.status === "Food Processing").length,
-    delivered:  orders.filter(o => o.status === "Delivered").length,
-    revenue:    orders.filter(o => o.payment).reduce((s, o) => s + o.amount, 0),
+    delivered: orders.filter(o => o.status === "Delivered").length,
+    revenue: orders.filter(o => o.payment).reduce((s, o) => s + o.amount, 0),
   };
 
   return (
@@ -366,7 +365,7 @@ const Orders = ({ url }) => {
             <div className="flex items-center gap-2">
               <span className="text-lg">✨</span>
               <h2 className="text-base font-bold text-white">AI Customer Insights</h2>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-accent/20 text-brand-accent font-semibold">Gemini</span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-brand-accent/20 text-brand-accent font-semibold">GROQ</span>
             </div>
             <button
               onClick={fetchSentiment}
@@ -387,7 +386,7 @@ const Orders = ({ url }) => {
           {sentimentLoading && (
             <div className="flex items-center gap-2 text-sm text-brand-muted py-4">
               <span className="animate-pulse">✨</span>
-              <span>Gemini is analysing customer feedback…</span>
+              <span>GROQ is analysing customer feedback…</span>
             </div>
           )}
 
@@ -400,10 +399,9 @@ const Orders = ({ url }) => {
                 </span>
                 <div>
                   <p className="text-[10px] text-brand-muted uppercase tracking-wider">Overall Sentiment</p>
-                  <p className={`font-bold text-lg ${
-                    sentimentData.overall === "Positive" ? "text-emerald-400" :
-                    sentimentData.overall === "Negative" ? "text-red-400" : "text-yellow-400"
-                  }`}>{sentimentData.overall}</p>
+                  <p className={`font-bold text-lg ${sentimentData.overall === "Positive" ? "text-emerald-400" :
+                      sentimentData.overall === "Negative" ? "text-red-400" : "text-yellow-400"
+                    }`}>{sentimentData.overall}</p>
                 </div>
               </div>
 
@@ -448,10 +446,10 @@ const Orders = ({ url }) => {
         {/* Stats row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
           {[
-            { label: "Total Orders",  value: stats.total,      color: "text-brand-accent", bg: "bg-brand-accent/15", icon: FiPackage },
-            { label: "Processing",    value: stats.processing, color: "text-orange-400",   bg: "bg-orange-500/15",   icon: FiTruck },
-            { label: "Delivered",     value: stats.delivered,  color: "text-emerald-400",  bg: "bg-emerald-500/15",  icon: FiCheckCircle },
-            { label: "Revenue",       value: `₹${stats.revenue.toLocaleString()}`, color: "text-yellow-400", bg: "bg-yellow-500/15", icon: FiDollarSign },
+            { label: "Total Orders", value: stats.total, color: "text-brand-accent", bg: "bg-brand-accent/15", icon: FiPackage },
+            { label: "Processing", value: stats.processing, color: "text-orange-400", bg: "bg-orange-500/15", icon: FiTruck },
+            { label: "Delivered", value: stats.delivered, color: "text-emerald-400", bg: "bg-emerald-500/15", icon: FiCheckCircle },
+            { label: "Revenue", value: `₹${stats.revenue.toLocaleString()}`, color: "text-yellow-400", bg: "bg-yellow-500/15", icon: FiDollarSign },
           ].map(({ label, value, color, bg, icon: Icon }) => (
             <div key={label} className="rounded-xl p-4 bg-brand-card border border-brand-border flex items-center gap-3">
               <div className={`w-9 h-9 rounded-lg ${bg} flex items-center justify-center shrink-0`}>
@@ -570,4 +568,3 @@ const Orders = ({ url }) => {
 };
 
 export default Orders;
- 

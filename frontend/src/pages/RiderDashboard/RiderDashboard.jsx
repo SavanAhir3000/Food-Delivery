@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import api from '../../config/axios.js';
 import { StoreContext } from '../../context/StoreContext.jsx';
-import { getSocket, connectSocket } from '../../config/socket.js';
+import { connectSocket, joinRiderRoom, leaveRiderRoom } from '../../config/socket.js';
 import { toast } from 'react-toastify';
 import './RiderDashboard.css';
 
@@ -42,11 +42,22 @@ const RiderDashboard = () => {
 
     const userId = localStorage.getItem("userId");
     const socket = connectSocket(userId);
-    socket.emit('join_rider', userId);
+    joinRiderRoom(userId);
 
-    socket.on('food_ready', () => {
+    // 'food_ready' — emitted by orderService when admin sets status → 'Ready for Pickup'
+    socket.on('food_ready', (order) => {
       toast.info("🛵 New order ready for pickup!", { theme: "dark" });
       fetchAvailableOrders();
+    });
+
+    // 'new_order_available' — defensive alias
+    socket.on('new_order_available', () => {
+      fetchAvailableOrders();
+    });
+
+    // 'order_claimed' — another rider claimed an order; remove it from the pool instantly
+    socket.on('order_claimed', ({ orderId }) => {
+      setAvailableOrders(prev => prev.filter(o => o.id !== orderId));
     });
 
     socket.on('order_completed', () => {
@@ -73,8 +84,11 @@ const RiderDashboard = () => {
 
     return () => {
       socket.off('food_ready');
+      socket.off('new_order_available');
+      socket.off('order_claimed');
       socket.off('order_completed');
       socket.off('order_status_update');
+      leaveRiderRoom();
     };
   }, []);
 
@@ -143,13 +157,36 @@ const RiderDashboard = () => {
     }
   };
 
-  const getAdvanceButtonLabel = (status) => {
-    switch (status) {
-      case 'Food Processing':  return "Mark as Picked Up";
-      case 'Ready for Pickup': return "Mark as Picked Up";
-      case 'Out for Delivery': return "Mark as Delivered";
-      case 'Delivered':        return "Delivered ✓";
-      default:                 return "Next Step";
+  // ── Derive the correct action for the active order ──────────────────────
+  const renderActiveOrderAction = (order) => {
+    switch (order.status) {
+      case 'Food Processing':
+        return (
+          <div className="waiting-state">
+            <span className="waiting-spinner">⏳</span>
+            <p>Waiting for restaurant to prepare the order…</p>
+          </div>
+        );
+      case 'Ready for Pickup':
+        return (
+          <button className="btn-advance" onClick={handleAdvance}>
+            ✅ Mark as Picked Up
+          </button>
+        );
+      case 'Out for Delivery':
+        return (
+          <button className="btn-advance btn-advance--deliver" onClick={handleAdvance}>
+            🏠 Mark as Delivered
+          </button>
+        );
+      case 'Delivered':
+        return (
+          <button className="btn-advance" disabled>
+            Delivered ✓
+          </button>
+        );
+      default:
+        return null;
     }
   };
 
@@ -191,13 +228,7 @@ const RiderDashboard = () => {
                     <p>{activeOrder.address?.street}, {activeOrder.address?.city}</p>
                   </div>
                 </div>
-                <button
-                  className="btn-advance"
-                  onClick={handleAdvance}
-                  disabled={activeOrder.status === 'Delivered'}
-                >
-                  {getAdvanceButtonLabel(activeOrder.status)}
-                </button>
+                {renderActiveOrderAction(activeOrder)}
               </div>
             </div>
           ) : (
@@ -222,10 +253,18 @@ const RiderDashboard = () => {
                   <span>{order.items?.length} Items</span>
                   <span className="pool-price">₹{order.amount}</span>
                 </div>
+                {/* Status badge — tells rider whether they can pick it up now */}
+                <p className={`pool-status pool-status--${order.status === 'Ready for Pickup' ? 'ready' : 'processing'}`}>
+                  {order.status === 'Ready for Pickup' ? '✅ Ready for Pickup' : '⏳ Still Preparing'}
+                </p>
                 <p className="pool-address">{order.address?.street}, {order.address?.city}</p>
                 {activeOrder ? (
                   <button className="btn-claim btn-claim--disabled" disabled title="Complete your current delivery first">
                     🔒 Busy
+                  </button>
+                ) : order.status !== 'Ready for Pickup' ? (
+                  <button className="btn-claim btn-claim--disabled" disabled title="Wait for restaurant to finish">
+                    ⏳ Not Ready
                   </button>
                 ) : (
                   <button className="btn-claim" onClick={() => handleClaim(order.id)}>

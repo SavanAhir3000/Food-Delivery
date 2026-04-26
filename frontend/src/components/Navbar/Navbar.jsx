@@ -143,34 +143,7 @@ const Navbar = ({ setShowLogin }) => {
 
         {/* ── Nav Links ── */}
         <ul className="hidden sm:flex items-center gap-6 text-sm font-medium">
-          {isRiderUser ? (
-            // ── Rider-specific nav links ──
-            [
-              { label: "Deliveries", to: "/deliveries",     key: "deliveries" },
-              { label: "Earnings",   to: "/earnings",       key: "earnings" },
-              { label: "History",    to: "/deliveries",     key: "history" },
-            ].map(({ label, to, key }) => {
-              const isActive = menu === key;
-              const cls = [
-                "relative pb-0.5 transition-colors duration-200 capitalize",
-                isActive
-                  ? "text-brand-accent"
-                  : dark
-                    ? "text-slate-300 hover:text-brand-accent"
-                    : "text-slate-600 hover:text-brand-accent",
-              ].join(" ");
-              return (
-                <li key={key}>
-                  <Link to={to} onClick={() => setMenu(key)} className={cls}>
-                    {label}
-                    {isActive && (
-                      <span className="absolute -bottom-0.5 left-0 w-full h-0.5 rounded-full bg-brand-accent" />
-                    )}
-                  </Link>
-                </li>
-              );
-            })
-          ) : (
+          {!isRiderUser && (
             // ── Customer nav links ──
             [
               { label: "Home",    to: "/",             key: "home" },

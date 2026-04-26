@@ -110,6 +110,9 @@ export const placeNewOrder = async (body, io) => {
     address: selectedAddress,
     delivery_address: selectedAddress, // Explicit column as requested
     payment_method: body.paymentMethod || "Stripe",
+    // COD orders are confirmed immediately — payment collected at door.
+    // Stripe orders start as false and become true after payment verification.
+    payment: body.paymentMethod === "COD" ? true : false,
     promo_code: body.promoCode || null,
     discount_amount: discountValue,
     estimated_delivery: estimatedDelivery,
@@ -450,15 +453,22 @@ export const changeOrderStatus = async (userId, orderId, status, io) => {
     emitSocketEvent(io, `user_${order.user_id}`, "new_notification", { orderId: order.id });
 
     if (status === "Ready for Pickup") {
-      emitSocketEvent(io, "rider_room", "food_ready", {
+      const riderPayload = {
         orderId: order.id,
-        items: order.items,
+        id: order.id,
+        status: order.status,
         amount: order.amount,
-        address: {
-          street: order.address?.street,
-          city: order.address?.city,
-        },
-      });
+        items: order.items,
+        address: order.address,
+        delivery_fee: order.delivery_fee,
+        created_at: order.created_at,
+        payment: order.payment,
+        rider_id: order.rider_id,
+      };
+      // 'food_ready' — legacy event name kept for backward compat
+      emitSocketEvent(io, "rider_room", "food_ready", riderPayload);
+      // 'new_order_available' — canonical event name for new listeners
+      emitSocketEvent(io, "rider_room", "new_order_available", riderPayload);
     }
 
     if (customer?.email) {

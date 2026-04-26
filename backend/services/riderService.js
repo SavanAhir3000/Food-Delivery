@@ -16,25 +16,44 @@ const STATUS_FLOW = {
 
 /**
  * Fetch all orders available for riders to claim.
- * Includes both "Food Processing" (paid, awaiting kitchen) and
- * "Ready for Pickup" (kitchen done) orders that have no rider assigned yet.
+ * - "Ready for Pickup": kitchen is done, any unassigned order is claimable.
+ *   (COD orders are legitimate here — admin already advanced them intentionally.)
+ * - "Food Processing": only include payment=true to exclude unverified Stripe orders
+ *   that haven't been confirmed yet.
  */
 export const getAvailableOrders = async () => {
-  const data = await dbQuery("orders", (q) =>
+  // Fetch Ready-for-Pickup orders regardless of payment flag
+  // (COD orders have payment=false but are valid — rider collects cash at door)
+  const readyOrders = await dbQuery("orders", (q) =>
     q
       .select("*")
-      .in("status", ["Food Processing", "Ready for Pickup"])
+      .eq("status", "Ready for Pickup")
+      .is("rider_id", null)
+      .order("created_at", { ascending: true })
+  );
+
+  // Fetch Food Processing orders only where payment is confirmed (Stripe paid)
+  const processingOrders = await dbQuery("orders", (q) =>
+    q
+      .select("*")
+      .eq("status", "Food Processing")
       .is("rider_id", null)
       .eq("payment", true)
       .order("created_at", { ascending: true })
   );
-  console.log(`[RiderService] Available orders found: ${Array.isArray(data) ? data.length : 0}`);
-  return data;
+
+  const combined = [...(readyOrders || []), ...(processingOrders || [])]
+    .sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+  console.log(`[RiderService] Available orders — Ready: ${readyOrders?.length ?? 0}, Processing: ${processingOrders?.length ?? 0}, Total: ${combined.length}`);
+  return combined;
 };
 
 
 /**
  * Claim an available order.
+ * Only orders with status 'Ready for Pickup' can be claimed —
+ * 'Food Processing' means the kitchen hasn't finished yet.
  * Guards against a rider claiming multiple orders simultaneously.
  */
 export const claimOrder = async (orderId, riderId) => {
@@ -55,7 +74,12 @@ export const claimOrder = async (orderId, riderId) => {
 
   if (!order) throw new Error("Order not found");
   if (order.rider_id) throw new Error("Order already claimed");
-  if (!["Food Processing", "Ready for Pickup"].includes(order.status)) throw new Error("Order not available");
+
+  // Only allow claiming orders the kitchen has finished preparing.
+  // 'Food Processing' = still cooking — rider cannot claim yet.
+  if (order.status !== "Ready for Pickup") {
+    throw new Error("ORDER_NOT_READY");
+  }
 
   // Step 2: Update orders (atomic: only if rider_id is still null)
   const updatedOrder = await dbQuery("orders", (q) =>
@@ -78,6 +102,8 @@ export const claimOrder = async (orderId, riderId) => {
   const io = getIO();
   io.to(`user_${order.user_id}`).emit("order_status_update", { orderId, status: order.status, riderId });
   io.to("admin_room").emit("order_status_update", { orderId, status: order.status, riderId });
+  // Remove from every rider's pool (it's now claimed)
+  io.to("rider_room").emit("order_claimed", { orderId });
 
   // Step 5: Insert notification for customer
   await dbQuery("notifications", (q) =>
@@ -205,13 +231,14 @@ export const updateLocation = async (riderId, lat, lng) => {
 
 /**
  * Get the current active order for a rider.
+ * Includes Food Processing so edge-case already-claimed kitchen orders are visible.
  */
 export const getActiveOrder = async (riderId) => {
   const data = await dbQuery("orders", (q) =>
     q
       .select("*")
       .eq("rider_id", riderId)
-      .in("status", ["Ready for Pickup", "Out for Delivery"])
+      .in("status", ["Food Processing", "Ready for Pickup", "Out for Delivery"])
       .maybeSingle()
   );
   return data || null;

@@ -3,6 +3,9 @@ import { resolveSocketUserId } from "../utils/jwt.js";
 
 let socket = null;
 
+// Track the rider ID so we can re-join rider_room on reconnect.
+let _riderRoomId = null;
+
 function emitJoinUser(uid) {
   if (socket?.connected && uid) {
     socket.emit("join_user", uid);
@@ -10,7 +13,28 @@ function emitJoinUser(uid) {
 }
 
 /**
- * Single shared Socket.IO client. Re-joins user room whenever user id can be resolved.
+ * Register the current session as a rider.
+ * Call this from the Rider Dashboard — it persists across reconnects.
+ * @param {string} riderId
+ */
+export function joinRiderRoom(riderId) {
+  _riderRoomId = riderId;
+  if (socket?.connected && riderId) {
+    socket.emit("join_rider", riderId);
+    console.log("[Socket] Joined rider_room as rider:", riderId);
+  }
+}
+
+/**
+ * Tear down rider room membership (call on unmount / logout).
+ */
+export function leaveRiderRoom() {
+  _riderRoomId = null;
+}
+
+/**
+ * Single shared Socket.IO client. Re-joins user room (and rider room if applicable)
+ * on every connect / reconnect automatically.
  */
 export function connectSocket(userId) {
   const token = localStorage.getItem("token");
@@ -21,6 +45,8 @@ export function connectSocket(userId) {
 
   if (socket?.connected) {
     emitJoinUser(uid);
+    // Re-join rider room if this tab is a rider session
+    if (_riderRoomId) joinRiderRoom(_riderRoomId);
     return socket;
   }
 
@@ -31,8 +57,13 @@ export function connectSocket(userId) {
     socket.on("connect", () => {
       const id = resolveSocketUserId();
       emitJoinUser(id);
+      // Re-join rider room automatically on every (re)connect
+      if (_riderRoomId) {
+        socket.emit("join_rider", _riderRoomId);
+        console.log("[Socket] Reconnected — re-joined rider_room as rider:", _riderRoomId);
+      }
       if (id) {
-        console.log("Socket connected; joined user room:", id);
+        console.log("[Socket] Connected; joined user room:", id);
       }
     });
   }
@@ -50,4 +81,5 @@ export function disconnectSocket() {
     socket.disconnect();
     socket = null;
   }
+  _riderRoomId = null;
 }

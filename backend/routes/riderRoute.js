@@ -32,6 +32,12 @@ riderRouter.post("/claim", async (req, res, next) => {
     if (err.message === "RIDER_ALREADY_BUSY") {
       return res.status(400).json({ success: false, message: "You already have an active delivery. Complete it before claiming another." });
     }
+    if (err.message === "ORDER_NOT_READY") {
+      return res.status(400).json({ success: false, message: "This order isn't ready for pickup yet. Wait for the restaurant to finish preparing it." });
+    }
+    if (err.message === "Order already claimed") {
+      return res.status(409).json({ success: false, message: "This order was already claimed by another rider." });
+    }
     next(err);
   }
 });
