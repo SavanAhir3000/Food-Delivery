@@ -42,4 +42,4 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
       - name: Verify Docker Compose Build
-        run: docker-compose build
+        run: docker compose build
