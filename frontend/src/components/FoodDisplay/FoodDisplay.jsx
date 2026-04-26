@@ -286,7 +286,7 @@ const FoodDisplay = ({ category }) => {
                 key={item._id}
                 id={item._id}
                 name={item.name}
-                description={getCategoryDescription(item.category)}
+                description={item.description || getCategoryDescription(item.category)}
                 price={item.price}
                 calorie={item.calorie}
                 image={item.image}
