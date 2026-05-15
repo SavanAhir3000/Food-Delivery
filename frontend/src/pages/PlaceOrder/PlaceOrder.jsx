@@ -309,21 +309,7 @@ const PlaceOrder = () => {
         <div className="place-order-left">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
              <p className="title" style={{ margin: 0 }}>Delivery Information</p>
-             {!selectedAddressId && (
-               <button 
-                type="button"
-                onClick={handleGeolocation}
-                className="current-location-btn flex items-center px-3 py-1.5 rounded-lg text-sm transition-colors"
-                disabled={fetchingLocation}
-               >
-                 {fetchingLocation ? (
-                   <span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full" />
-                 ) : (
-                   <span>🎯</span>
-                 )}
-                 {fetchingLocation ? "Locating..." : "Use Current Location"}
-               </button>
-             )}
+             
           </div>
 
           {savedAddresses.length > 0 && !selectedAddressId && (

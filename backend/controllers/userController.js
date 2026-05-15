@@ -13,8 +13,8 @@ import {
 import { logger } from '../utils/logger.js';
 
 const ERROR_MESSAGES = {
-  USER_NOT_FOUND:            "User doesn't exist",
-  INVALID_CREDENTIALS:       "Invalid credentials",
+  USER_NOT_FOUND:            "Invalid email or password",
+  INVALID_CREDENTIALS:       "Invalid email or password",
   NO_PENDING_CODE:           "No verification code pending. Please login again.",
   CODE_EXPIRED:              "Code expired. Please login again.",
   INVALID_CODE:              "Invalid verification code",
