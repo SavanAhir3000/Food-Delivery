@@ -1,29 +1,6 @@
 # BiteBlitz - Enterprise Food Delivery Ecosystem
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-### 4. Application Performance & UX Polish
-- **Skeleton Loaders:** Elegant CSS-animated pulsing placeholders that seamlessly display while waiting for database queries, eliminating jarring layout-shifts on slow network connections.
-- **Infinite MongoDB Pagination:** Optimized Order History fetching algorithms using Mongoose `.skip()` and `.limit()` variables to query subsets of items sequentially (Load More).
-- **Rapid Reorder Engine:** A lightning-fast "Order Again" button that overrides the global Context and bulk-injects historical Mongo arrays straight back into the live checkout cart.
-- **Offline Error Boundaries:** Custom Window Event Listeners that actively detect lost Wi-Fi connections, warning the user gracefully with a Toast UI overlay.
-
-### 5. Backend Tooling & Data Handling
-- **Automated PDF Invoice Generation:** Node.js seamlessly writes, formats, and attaches PDF receipts onto Stripe Confirmations during the checkout pipeline using `pdfkit`.
-- **Image Optimization Engine:** Built-in `sharp` bindings intercept and shrink every Administrator Food Image upload natively down to high-efficiency WebP files before executing the disk writes.
-- **Omnichannel Support:** Support for Twilio SMS notifications and Google Places API autocomplete bindings for flawless coordinate routing during checkout.
-
----
-
-## 🛠️ Technology Stack
-
-- **Frontend Application (Customer View):** React LTS, Vite, Axios, React-Router-DOM, React Context API, WebSockets.
-- **Administrator Panel:** React LTS, Vite, Axios, WebSockets.
-- **Backend API & Server:** Node.js, Express.js, MongoDB (Mongoose), Socket.io.
-- **In-Memory Cache (Optional):** Redis for blazing-fast menu load times.
-- **Payment Gateway:** Stripe API (w/ HMAC Signature Webhooks).
-- **Security Protocols:** JSON Web Tokens (JWT), bcrypt-password hashes, Express-Rate-Limit.
-
----
 
 ## 🚀 Getting Started & Installation
 
