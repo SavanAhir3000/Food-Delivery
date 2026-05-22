@@ -102,7 +102,7 @@ All roles enforced via `requireRole()` middleware on every protected route. Role
 
 **1. Clone the repo**
 ```bash
-git clone https://github.com/SavanAhir3000/Food-Delivery.git
+git clone https://github.com/savan-rajatiya/Food-Delivery.git
 cd Food-Delivery
 ```
 
