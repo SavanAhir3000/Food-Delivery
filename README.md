@@ -62,7 +62,6 @@ A production-grade, multi-role food delivery platform with real-time order track
 - **Stripe** — payments, webhooks, and refunds
 - **Nodemailer** (Gmail SMTP) — order confirmation + password reset emails
 - **Sharp** — image resizing and WebP conversion
-- **PDFKit** — invoice generation attached to confirmation emails
 - **Groq API** (llama-3.1-8b-instant) — all AI features
 - **Swagger** — live API docs at `/api-docs`
 - **express-rate-limit** — rate limiting on all routes
@@ -215,17 +214,6 @@ Live Swagger UI available at `http://localhost:4000/api-docs` when the backend i
 | `admin_room` | Admin | `new_order`, `order_feedback_update` |
 | `rider_room` | All riders | `new_order_available`, `food_ready` |
 | `rider_{id}` | Specific rider | `order_status_update` |
-
----
-
-## 🧪 Testing
-
-A `qa_test.js` file and `jest.config.js` are included for automated tests.
-
-```bash
-cd backend
-npm test
-```
 
 ---
 
